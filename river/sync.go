@@ -10,7 +10,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/siddontang/go-log/log"
-	"github.com/siddontang/go-mysql-elasticsearch/elastic"
+	"github.com/sanghwa-ham/go-mysql-elasticsearch/elastic"
 	"github.com/siddontang/go-mysql/canal"
 	"github.com/siddontang/go-mysql/mysql"
 	"github.com/siddontang/go-mysql/replication"
@@ -28,6 +28,7 @@ const (
 	// for the mysql int type to es date type
 	// set the [rule.field] created_time = ",date"
 	fieldTypeDate = "date"
+	fieldTypeToString = "to_str"
 )
 
 const mysqlDateFormat = "2006-01-02"
@@ -513,6 +514,17 @@ func (r *River) getFieldValue(col *schema.TableColumn, fieldType string, value i
 			switch v.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				fieldValue = r.makeReqColumnData(col, time.Unix(v.Int(), 0).Format(mysql.TimeFormat))
+			}
+		}
+
+	case fieldTypeToString:
+		if col.Type == schema.TYPE_NUMBER {
+			col.Type = schema.TYPE_STRING
+
+			v := reflect.ValueOf(value)
+			switch v.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				fieldValue = r.makeReqColumnData(col, fmt.Sprint(v.Int()))
 			}
 		}
 	}
